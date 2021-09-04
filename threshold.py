@@ -12,13 +12,13 @@ img = io.imread('project1_images/project1_images/houndog1.png')
 gray_img = color2grey(img)
 plt.imshow(gray_img, cmap='gray')
 plt.show()
-print('2d img shape: ', np.shape(gray_img))
+
+gray_img_mod = thresh(gray_img, 20, 20, 235, 100)
+plt.imshow(gray_img_mod, cmap='gray')
+plt.show()
 
 flat = flatten(gray_img)
-print('flat img shape: ', np.shape(flat))
-
-img_hist = flat2hist(flat, 256, 0)
-print('flat img shape: ', np.shape(img_hist))
+img_hist = flat2hist(flat, 1024, 0)
 
 plt.bar(img_hist[0], img_hist[1], color = 'green')
 plt.xlabel('Bin')

@@ -28,6 +28,20 @@ def flatten(img):
           cnt += 1
   return flat_arr
 
+def thresh(img, upper, lower, center, val):
+  np_img = np.array(img)
+  cnt = 0
+  y_len = np.shape(np_img)[0];
+  x_len = np.shape(np_img)[1];
+  
+  # Create 1 dimensional array
+  for yy in range(y_len-1):
+      for xx in range(x_len-1):
+          if np_img[yy,xx] > center - lower and np_img[yy,xx] <= center + upper:
+            np_img[yy,xx] = val;                          
+  return np_img
+
+
 def flat2hist(flat_img, num_bins, plot_enable):
 
   if plot_enable == 1:
@@ -35,13 +49,10 @@ def flat2hist(flat_img, num_bins, plot_enable):
   
   img = np.array(flat_img)
   img_max = np.amax(img)
-  print('max: ', img_max)
   img_min = np.amin(img)
-  print('min: ', img_min)  
   img_len = np.shape(img)[0]
   epsilon = float((img_max - img_min)/num_bins)
   bins = np.arange(img_min, img_max, epsilon)
-  #bins = np.arange(img_min, img_max)  
   bins_count = np.zeros((len(bins)))
   bins_len = len(bins)
 
