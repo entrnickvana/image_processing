@@ -30,6 +30,39 @@ def flatten(img):
           cnt += 1
   return flat_arr
 
+def thresh_uniform(img, num_bins):
+  new_img = np.array(img)
+  mmax = np.amax(img)
+  mmin = np.amin(img)
+  sspan = mmax-mmin
+  seg = sspan/num_bins
+  half = seg/2
+  
+  for ii in range(num_bins):
+      new_img = thresh(new_img, half, half, (ii*seg)+half, (ii*seg)+half)
+      
+  return new_img
+
+def thresh_uniform_ends(img, num_bins):
+  new_img = np.array(img)
+  mmax = np.amax(img)
+  mmin = np.amin(img)
+  sspan = mmax-mmin
+  seg = sspan/num_bins
+  half = seg/2
+  
+  for ii in range(num_bins):
+      if ii == 0:
+        new_img = thresh(new_img, half, 0, mmin, mmin)
+        continue
+      if ii == num_bins-1:
+        new_img = thresh(new_img, 0, half, mmax, mmax)
+        continue
+      
+      new_img = thresh(new_img, half, half, (ii*seg)+half, (ii*seg)+half)
+      
+  return new_img
+
 def thresh(img, upper, lower, center, val):
   cnt = 0
   new_img = np.array(img)
@@ -117,65 +150,114 @@ def comp_label_gray_debug(img, x, y, targ_val, tolerance, nbrhd_width):
     new_img = np.array(img[y-half:y+half+1, x-half:x+half+1])
     plt.imshow(new_img, cmap='gray')
     plt.show()
-    
+
+
+def majority(nbrhd, targ_val, tolerance):
+    #plt.figure(3)
+    #plt.imshow(nbrhd, cmap='gray')
+    #plt.show()
+    y_len = np.shape(nbrhd)[0];
+    x_len = np.shape(nbrhd)[1];
+    print('y_len: ', y_len, '\tx_len', x_len )    
+    sum1 = 0
+    count = 0
+    is_majority = 0
+    for yy in range(y_len):
+        for xx in range(x_len):
+            if (nbrhd[yy, xx] >= targ_val - tolerance) and (nbrhd[yy, xx] < targ_val + tolerance):
+              sum1+= 1
+            print('sum: ', sum1, '\tcount: ', count, '\tcurr val: ', nbrhd[yy, xx], 'target: ', targ_val -tolerance, '  ',targ_val + tolerance)
+            count+=1
+
+    print('result', (sum1/count))
+    if ((sum1/count) >= 0.5):
+        is_majority = 1
+
+    print('is_majority: ', is_majority)
+        
+    return is_majority
 
 def comp_label_gray(img, y, x, targ_val, tolerance, nbrhd_width):
     count = 0
     half = int(nbrhd_width/2)
-    print('half', half)
     y_len = np.shape(img)[0];
-    print('y_len', y_len)
     x_len = np.shape(img)[1];
-    print('x_len', x_len)
     x_neg = x-half
-    print('x_neg', x_neg)
     y_neg = y-half
-    print('y_neg', y_neg)
     y_over = y_len-(y+half)-1
-    print('y_over', y_over)
     x_over = x_len-(x+half)-1
-    print('x_over', x_over)    
-    
 
     ## Top left --
     if (x_neg < 0) and (y_neg < 0):
-      print('11111')
-      new_img = np.array(img[0:y+half+1, 0:x+half+1])        
+      new_img = np.array(img[0:y+half+1, 0:x+half+1])
     ## Top right --
     elif (x_over < 0) and (y_neg < 0):
-      print('22222')        
       new_img = np.array(img[0:y+half+1, x-half:x_len])                
     ## bottom left --
     elif (x_neg < 0) and (y_over < 0):
-      print('333333')                
       new_img = np.array(img[y-half:y_len, 0:x+half+1])        
     ## bottom right
     elif (x_over < 0) and (y_over < 0):
-      print('4444444')                        
       new_img = np.array(img[y-half:y_len, x-half:x_len]) 
     ## Top --
     elif (y_neg < 0):
-      print('5555555')                                
       new_img = np.array(img[0:y+half+1, x-half:x+half+1])
     ## Bottom --
     elif (y_over < 0):
-      print('66666666')                                        
       new_img = np.array(img[y-half:y_len, x-half:x+half+1])        
     ## left --
     elif (x_neg < 0):
-      print('77777777')                                                
       new_img = np.array(img[y-half:y+half+1, 0:x+half+1])        
     ## right --
     elif (x_over < 0):
-      print('88888888')                                                        
       new_img = np.array(img[y-half:y+half+1, x-half:x_len])
     else:
-      print('99999999')                                                                
       new_img = np.array(img[y-half:y+half+1, x-half:x+half+1])
-      
-    plt.imshow(new_img, cmap='gray')
-    plt.show()
+
+    #print('comp label gray: ', np.shape(new_img))
+    #plt.imshow(new_img, cmap='gray')
+    #plt.show()
+
+    return majority(new_img, targ_val, tolerance)
+
     
+def c_label(img, targ_val,tolerance, nbrhd_width):
+
+    if(nbrhd_width % 2 == 0):
+        print('nbrhd_width: ', nbrhd_width, '  must be an odd number')
+        return 0
+
+    new_img = np.array(img)
+    y_len = np.shape(img)[0];
+    x_len = np.shape(img)[1];
+    for yy in range(y_len):
+        for xx in range(x_len):
+            if(comp_label_gray(img, yy, xx, targ_val, tolerance, nbrhd_width) > 0):
+                new_img[yy, xx] = targ_val;
+            #plt.imshow(new_img, cmap='gray')
+            #plt.show()
+            
+    return new_img
+
+def c_label_bins(img, targ_vals,tolerance, nbrhd_width):
+
+    if(nbrhd_width % 2 == 0):
+        print('nbrhd_width: ', nbrhd_width, '  must be an odd number')
+        return 0
+
+    targ_vals_len = len(targ_vals)
+    new_img = np.array(img)
+    y_len = np.shape(img)[0];
+    x_len = np.shape(img)[1];
+    for yy in range(y_len):
+        for xx in range(x_len):
+            for targs in range(targ_vals_len-1):
+              if(comp_label_gray(img, yy, xx, targ_vals[targs], tolerance, nbrhd_width) > 0):
+                new_img[yy, xx] = targ_vals[targs];
+            #plt.imshow(new_img, cmap='gray')
+            #plt.show()
+            
+    return new_img
 
             
 
