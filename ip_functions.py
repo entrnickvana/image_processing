@@ -3,7 +3,7 @@ import code
 import os
 import skimage
 from skimage import io
-
+from skimage import data, filters, color, morphology, img_as_float, exposure
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -66,7 +66,6 @@ def thresh_uniform_ends(img, num_bins):
 def thresh(img, upper, lower, center, val):
   cnt = 0
   new_img = np.array(img)
-  print('shape orig: ', np.shape(img), 'new shape: ', np.shape(new_img))
   y_len = np.shape(img)[0];
   x_len = np.shape(img)[1];
   
@@ -76,6 +75,28 @@ def thresh(img, upper, lower, center, val):
             new_img[yy,xx] = val;
         
   return new_img
+
+def comp_eq(img, bins, name):
+    img = img_as_float(img)
+    plt.subplot(221)    
+    plt.imshow(img, cmap='gray')
+    plt.subplot(222)
+    img_hist = flat2hist(flatten(img.astype(int)), bins, 0)
+    plt.bar(img_hist[0], img_hist[1], color = 'blue')
+    plt.xlabel('Bin')
+    plt.ylabel('Count')
+    plt.title('Histogram')
+    img_eq = exposure.equalize_hist(img)
+    plt.subplot(223)    
+    plt.imshow(img_eq, cmap='gray')
+    plt.subplot(224)
+    img_hist = flat2hist(flatten(img_eq.astype(int)), bins, 0)
+    plt.bar(img_hist[0], img_hist[1], color = 'blue')
+    plt.xlabel('Bin')
+    plt.ylabel('Count')
+    plt.title('Equalized Histogram')
+    plt.show()
+
 
 def thresh_div(img, val):
   cnt = 0
@@ -140,25 +161,14 @@ def color2grey(img):
 def comp_label_gray_debug(img, x, y, targ_val, tolerance, nbrhd_width):
     count = 0
     half = int(nbrhd_width/2)
-    print('y: ', y)
-    print('x: ', x)        
-    print('nbrhd: ', nbrhd_width)
-    print('half: ', half)
-    print('y+half', y+half, 'y-half', y-half)
-    print('x+half', x+half, 'x-half', x-half)
-    print('y slice: ', img[y-half:y+half+1, x-half:x+half+1])
     new_img = np.array(img[y-half:y+half+1, x-half:x+half+1])
     plt.imshow(new_img, cmap='gray')
     plt.show()
 
 
 def majority(nbrhd, targ_val, tolerance):
-    #plt.figure(3)
-    #plt.imshow(nbrhd, cmap='gray')
-    #plt.show()
     y_len = np.shape(nbrhd)[0];
     x_len = np.shape(nbrhd)[1];
-    print('y_len: ', y_len, '\tx_len', x_len )    
     sum1 = 0
     count = 0
     is_majority = 0
@@ -166,14 +176,10 @@ def majority(nbrhd, targ_val, tolerance):
         for xx in range(x_len):
             if (nbrhd[yy, xx] >= targ_val - tolerance) and (nbrhd[yy, xx] < targ_val + tolerance):
               sum1+= 1
-            print('sum: ', sum1, '\tcount: ', count, '\tcurr val: ', nbrhd[yy, xx], 'target: ', targ_val -tolerance, '  ',targ_val + tolerance)
             count+=1
 
-    print('result', (sum1/count))
     if ((sum1/count) >= 0.5):
         is_majority = 1
-
-    print('is_majority: ', is_majority)
         
     return is_majority
 
@@ -259,8 +265,55 @@ def c_label_bins(img, targ_vals,tolerance, nbrhd_width):
             
     return new_img
 
-            
+def smooth(img, n_pix):
 
+    y_len = np.shape(img)[0];
+    x_len = np.shape(img)[1];
+    new_img = np.array(img)
+
+    for yy in range(y_len-n_pix):
+        for xx in range(x_len-n_pix):
+            new_img[yy, xx] = np.sum(img[yy:yy+n_pix,xx:xx+n_pix])/(n_pix*n_pix)
+
+    return new_img
+
+#https://programtalk.com/python-examples/skimage.morphology.remove_small_holes/            
+def test_labeled_image_holes():
+    labeled_holes_image = np.array([[0,0,0,0,0,0,1,0,0,0],
+                                    [0,1,1,1,1,1,0,0,0,0],
+                                    [0,1,0,0,1,1,0,0,0,0],
+                                    [0,1,1,1,0,1,0,0,0,0],
+                                    [0,1,1,1,1,1,0,0,0,0],
+                                    [0,0,0,0,0,0,0,2,2,2],
+                                    [0,0,0,0,0,0,0,2,0,2],
+                                    [0,0,0,0,0,0,0,2,2,2]], dtype=int)
+
+    plt.subplot(221)
+    plt.imshow(labeled_holes_image, cmap='gray')
+    plt.title('labeled holes')
+    
+    expected = np.array([[0,0,0,0,0,0,1,0,0,0],
+                         [0,1,1,1,1,1,0,0,0,0],
+                         [0,1,1,1,1,1,0,0,0,0],
+                         [0,1,1,1,1,1,0,0,0,0],
+                         [0,1,1,1,1,1,0,0,0,0],
+                         [0,0,0,0,0,0,0,1,1,1],
+                         [0,0,0,0,0,0,0,1,1,1],
+                         [0,0,0,0,0,0,0,1,1,1]], dtype=bool)
+
+    plt.subplot(222)
+    plt.imshow(expected, cmap='gray')
+    plt.title('expected holes')
+
+    
+    observed = morphology.remove_small_holes(labeled_holes_image, 3)
+    
+    plt.subplot(223)    
+    plt.imshow(observed, cmap='gray')
+    plt.title('observed holes')
+    plt.show()
+    
+    #assert_array_equal(observed, expected)
     
 
 
