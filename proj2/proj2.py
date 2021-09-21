@@ -131,6 +131,28 @@ for ii in range(0, len(hist_arr), 2):
 plt.show()
 plt.savefig('Norm_noise_with_hist')
 
+plt.subplot(331)
+plt.imshow(cam_noises[0], cmap='gray')
+plt.subplot(332)
+plt.imshow(cam_noises[2]/cam_noises[2].max(), cmap='gray')
+plt.subplot(333)
+plt.imshow(filters.rank.mean(cam_noises[2]/cam_noises[2].max(), np.ones((3,3))), cmap='gray')
+plt.subplot(334)
+plt.imshow(filters.rank.mean(cam_noises[2]/cam_noises[2].max(), np.ones((5,5))), cmap='gray')
+plt.subplot(335)
+plt.imshow(filters.rank.mean(cam_noises[2]/cam_noises[2].max(), np.ones((7,7))), cmap='gray')
+plt.subplot(336)
+plt.imshow(filters.rank.mean(cam_noises[2]/cam_noises[2].max(), np.ones((9,9))), cmap='gray')
+plt.subplot(337)
+plt.imshow(filters.rank.mean(cam_noises[2]/cam_noises[2].max(), np.ones((11,11))), cmap='gray')
+plt.subplot(338)
+plt.imshow(filters.rank.mean(cam_noises[2]/cam_noises[2].max(), np.ones((13,13))), cmap='gray')
+plt.subplot(339)
+plt.imshow(filters.rank.mean(cam_noises[2]/cam_noises[2].max(), np.ones((15,15))), cmap='gray')
+plt.show()
+
+
+
 
 
 
